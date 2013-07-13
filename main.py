@@ -9,6 +9,7 @@ import Indexing as IX
 from Indexing import utf8str
 from sets import Set
 
+IX.DB_PATH = "_index.db"
 IX.init_db()
 
 PLATFORM_NAME = platform.system()

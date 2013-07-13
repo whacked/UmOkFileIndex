@@ -16,10 +16,6 @@ import os, re
 
 import hashlib
 
-
-INDEXFILEPATH = "index.db"
-DB_PATH = INDEXFILEPATH
-
 Base = declarative_base()
 File__Tag = sqla.Table("tfile__ttag", Base.metadata,
         sqla.Column('tfile_id', sqla.Integer, sqla.ForeignKey('tfile.id')),
@@ -281,26 +277,31 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.reindex_complete:
-        raise Exception("not completely implemented!")
-    elif args.reindex_from_scratch:
 
-        pexists(INDEXFILEPATH) and os.unlink(INDEXFILEPATH)
-        raise Exception("not completely implemented!")
-    elif args.reindex:
-        print "GO"
-
+    INDEXFILEPATH = "_index.db"
+    File.RELATIVE_BASE_DIR = args.basedir
 
     if args.use_fakedb:
         ## database definition
         DB_PATH = ":memory:"
+    else:
+        DB_PATH = INDEXFILEPATH
 
+    if args.reindex_complete:
+        raise Exception("not completely implemented!")
+    elif args.reindex_from_scratch:
+        pexists(INDEXFILEPATH) and os.unlink(INDEXFILEPATH)
+        raise Exception("not completely implemented!")
+    elif args.reindex:
+        print "reindexing"
+        
+    ## database check + initialization
     init_db()
 
-    ## database check + initialization
-    if not pexists(INDEXFILEPATH):
-
-        reindex_dir(".")
+    if args.use_fakedb or not pexists(INDEXFILEPATH):
+        ## TODO
+        ## this is redundant
+        reindex_dir(args.basedir)
 
     if args.add:
         f = File(args.add[0], derive_checksum = True, taglist = args.add[1:])

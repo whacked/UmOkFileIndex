@@ -294,19 +294,6 @@ if __name__ == "__main__":
 
     init_db()
 
-    if args.use_fakedb:
-
-        f = File("/tmp/jp.muse.gpg")
-
-        t = Tag("encrypted")
-        f.taglist.append(t)
-         
-        # Add to the session object
-        db_session.add(f)
-        # commit to the database
-        db_session.commit()
-         
-
     ## database check + initialization
     if not pexists(INDEXFILEPATH):
 

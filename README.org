@@ -12,6 +12,8 @@
 
 * PyQt app (main.py)
 
+  [[./screenshot.png]]
+
 ** dependencies
 
    PyQt4, sqlalchemy, sqlite. That *should* be it. I'm running python 2.7
@@ -50,6 +52,8 @@
 
   reindex probably doesn't reindex as much as it claims it would
 
+  actually... resync_db doesn't do anything now
+
 ** TODO realtime search slow for non-toy-sized indexes
 
 ** TODO change to pyfs?
@@ -57,6 +61,8 @@
 ** TODO change index.db location behavior
 
 ** TODO test utf8, probably bork somewhere
+
+** TODO reorganize this
 
 * LICENSE? [[http://www.wtfpl.net][WTFPL]]
 

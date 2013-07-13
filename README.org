@@ -1,0 +1,61 @@
+* UmOkFileIndex
+
+  a simple-minded tool to tag files (images really) and search them reasonably quickly
+  
+  If you have lots of pdf or don't need image support, check out =calibre=, =docfetcher=, =recoll=
+
+  But, I have a bunch of images scanned from old documents that are loosely organized in folders. They rarely change and are rarely accessed, but a lot have text. I just want a simple interface to join file paths to tags.
+
+* Y U NO EXIST!
+
+  Looked around, didn't find, so... Um Ok
+
+* PyQt app (main.py)
+
+** dependencies
+
+   PyQt4, sqlalchemy, sqlite. That *should* be it. I'm running python 2.7
+
+** running
+
+   put the files somewhere and launch with =python main.py /PATH/TO/YOUR/ARCHIVE/DIRECTORY=
+
+   =/PATH/TO/YOUR/ARCHIVE/DIRECTORY= will be the =ROOT PATH=, and file names will be stored relative to that root.
+
+   On first run, it will index the files in the directory. Files are initially tagged with parts derived from the filenames and relative file paths, and the extension.
+
+   When the program starts, nothing will show up. Enter something in the search bar, say, "jpg". TOFIX *realtime is really slow*
+   
+** tagging
+
+   Click on a file, tags show up below. Tags are comma-separated and all lowercase. Any non-lowercase input will be downcased.
+
+   Add/delete tags and click the =apply changes= button
+
+*** multiple tagging
+
+    click-drag, shift-click, or ctrl-click to select multiple entries. The tag listing will be narrowed down to tags shared between those entries.
+
+    Deleting or adding tags here, and clicking apply, will apply all tag additions and deletions to all selected files
+    
+** checksum...
+
+   For archive integrity, you should use =hashdeep= instead
+
+* command line app (Indexer.py)
+
+  =python Indexer.py --help=
+
+* TOFIX
+
+  reindex probably doesn't reindex as much as it claims it would
+
+** TODO realtime search slow for non-toy-sized indexes
+
+** TODO change to pyfs?
+
+** TODO change index.db location behavior
+
+* LICENSE? [[http://www.wtfpl.net][WTFPL]]
+
+  it's so cooooool.

@@ -1,8 +1,10 @@
 import sys, platform, os
 import hashlib
+import operator
 
 from PyQt4.QtGui import QApplication
 from PyQt4.QtCore import QDir, Qt
+from PyQt4.Qt import QVariant, QAbstractTableModel
 from PyQt4 import QtCore, QtGui
 
 import Indexing as IX
@@ -28,16 +30,11 @@ class InstantSearchLineEdit(QtGui.QLineEdit):
 
     def __init__(self, parent, target_table):
         self.table = target_table
+        self.model = target_table.model()
         super(QtGui.QLineEdit, self).__init__(parent)
 
     def keyPressEvent(self, event):
         QtGui.QLineEdit.keyPressEvent(self, event)
-
-        ## use this if you want a fixed table size
-        ## instead of dynamica resizing
-        ## self.table.clearContents()
-        while self.table.rowCount() > 0:
-            self.table.removeRow(0)
 
         ## to address strange behavior (bug?)
         ## http://stackoverflow.com/questions/3498829/how-to-get-this-qtablewidget-to-display-items
@@ -46,24 +43,67 @@ class InstantSearchLineEdit(QtGui.QLineEdit):
         if not ltoken: return
 
         lres = IX.File.findall(IX.File.OP_AND, ltoken)
-        for i, f in enumerate( lres ):
-            self.table.insertRow(i)
-            self.table.setItem(i, 0, QtGui.QTableWidgetItem(" ".join([utf8str(t.text) for t in f.taglist[:3]])))
-            self.table.setItem(i, 1, QtGui.QTableWidgetItem(f.path))
-            self.table.setItem(i, 2, QtGui.QTableWidgetItem(str(f.id)))
+        self.model.ls_data = lres
+
         self.table.setSortingEnabled(True)
+
+class MyTableModel(QAbstractTableModel):
+    _headerkey = ("taglist", "path")
+    _headertext = ("tags", "file")
+
+    def __init__(self, parent=None):
+        QAbstractTableModel.__init__(self, parent)
+        self.ls_data = []
+            
+    def rowCount(self, *argv):
+        return len(self.ls_data)
+
+    def columnCount(self, *argv):
+        return len(self._headerkey)
+
+    def data(self, index, role):
+        if not index.isValid():
+            return QVariant()
+        # if you remove the editrole
+        # when you double click to edit
+        # returning QVariant() makes the edit box blank
+        # adding the editrole drops to the last line
+        # returning edit box with its current contents
+        elif role != Qt.DisplayRole and role != Qt.EditRole:
+            return QVariant()
+        icol = index.column()
+        fobj = self.ls_data[index.row()]
+        if icol == 0:
+            return " ".join([utf8str(t.text) for t in fobj.taglist[:3]])
+        elif icol == 1:
+            return fobj.path
+
+    def sort(self, Ncol, order):
+        self.emit(QtCore.SIGNAL("layoutAboutToBeChanged()"))
+        self.ls_data = sorted(self.ls_data, key = operator.attrgetter(self._headerkey[Ncol]))
+        if order == Qt.DescendingOrder:
+            self.ls_data.reverse()
+        self.emit(QtCore.SIGNAL("layoutChanged()"))
+        
+    def headerData(self, col, orientation, role):
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return QVariant(self._headertext[col])
+            else:
+                return QVariant(col)
+# / class MyTableModel
 
 class MainApp(QtGui.QWidget):
     def __init__(self, ROOT_DIR, parent=None):
         super(MainApp, self).__init__(parent)
 
-        tv = self.tableView = QtGui.QTableWidget(0,3)
+        self.model = MyTableModel()
+
+        tv = self.tableView = QtGui.QTableView()
+        tv.setModel(self.model)
         tv.doubleClicked.connect(self.openFileCommand)
         tv.selectionModel().selectionChanged.connect(self.updateTagDisplayCommand)
         tv.horizontalHeader().setStretchLastSection(True)
-        tv.setColumnHidden(2, True)
-        for i, label in enumerate("tags file".split()):
-            tv.setHorizontalHeaderItem(i, QtGui.QTableWidgetItem(label))
         ## disable editing
         tv.setEditTriggers( QtGui.QTableWidget.NoEditTriggers )
 
@@ -121,7 +161,7 @@ class MainApp(QtGui.QWidget):
 
     def getFileAtRow(self, rowidx):
         # retrieve id from hidden data column (col id 2)
-        tfile_id = int(self.tableView.item(rowidx, 2).text())
+        tfile_id = int(self.model.ls_data[rowidx].id)
         return IX.File.get(id = tfile_id)
 
     def openDirCommand(self):

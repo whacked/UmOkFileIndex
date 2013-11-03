@@ -54,7 +54,10 @@
 
   actually... resync_db doesn't do anything now
 
-** TODO realtime search slow for non-toy-sized indexes
+** DONE realtime search slow for non-toy-sized indexes
+   CLOSED: [2013-11-03 Sun 14:09]
+
+   prelim fixed with using custom data model + tableview. should create another todo if still slow.
 
 ** TODO change to pyfs?
 

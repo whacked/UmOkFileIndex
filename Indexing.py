@@ -15,6 +15,7 @@ from os.path import join as pjoin, split as psplit, splitext as psplitext, exist
 import os, re
 
 import yaml
+import fs
 import hashlib
 
 Base = declarative_base()
@@ -75,6 +76,8 @@ class Tag(Base):
         return self.text
 
 class File(Base):
+    FS = None
+
     RELATIVE_BASE_DIR = None
 
     __tablename__ = 'tfile'
@@ -306,6 +309,13 @@ if __name__ == "__main__":
                 FS_BACKEND = "OSFS",
                 DB_DSN = "sqlite:///%s" % DB_PATH,
                 )
+
+    if conf["FS_BACKEND"] == "S3":
+        raise Exception("S3 not supported")
+    else:
+        from fs import OSFS
+        File.FS = OSFS()
+
     ## database check + initialization
     init_db()
 

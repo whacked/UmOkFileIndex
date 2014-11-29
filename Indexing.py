@@ -14,6 +14,7 @@ from glob import glob
 from os.path import join as pjoin, split as psplit, splitext as psplitext, exists as pexists
 import os, re
 
+import yaml
 import hashlib
 
 Base = declarative_base()
@@ -295,6 +296,16 @@ if __name__ == "__main__":
     elif args.reindex:
         print "reindexing"
         
+    ## parse config
+    if pexists("config.yml"):
+        print "loading config file..."
+        conf = yaml.load(open("config.yml"))
+    else:
+        print "loading default config..."
+        conf = dict(
+                FS_BACKEND = "OSFS",
+                DB_DSN = "sqlite:///%s" % DB_PATH,
+                )
     ## database check + initialization
     init_db()
 

@@ -24,6 +24,10 @@ File__Tag = sqla.Table("tfile__ttag", Base.metadata,
         sqla.Column('ttag_id', sqla.Integer, sqla.ForeignKey('ttag.id')),
         sqla.Column('rank', sqla.Float),
         )
+File__KV = sqla.Table("tfile__tkv", Base.metadata,
+        sqla.Column('tfile_id', sqla.Integer, sqla.ForeignKey('tfile.id')),
+        sqla.Column('ttag_id', sqla.Integer, sqla.ForeignKey('tkv.id')),
+        )
 
 def init_db():
     global db_session
@@ -74,6 +78,35 @@ class Tag(Base):
     def __repr__(self):
         return self.text
 
+class KV(Base):
+    """
+    KV store, derived from tag -> tag
+    """
+
+    __tablename__ = 'tkv'
+
+    id      = sqla.Column(sqla.Integer, primary_key=True)
+    key_id  = sqla.Column(sqla.Integer, sqla.ForeignKey('ttag.id'))
+    val_id  = sqla.Column(sqla.Integer, sqla.ForeignKey('ttag.id'))
+
+    key     = relationship('Tag', foreign_keys=[key_id])
+    val     = relationship('Tag', foreign_keys=[val_id])
+
+    filelist = relationship("File", backref="tkv", secondary=File__KV)
+
+    def __init__(self, tkey, tval):
+        self.key = tkey
+        self.val = tval
+
+    def __repr__(self):
+        return "%s: %s" % (self.key, self.val)
+
+class KVCollection:
+
+    def __init__(self, *attrlist):
+        self._attrmap = dict([()])
+
+
 class File(Base):
     FS = None
 
@@ -90,7 +123,15 @@ class File(Base):
 
     is_invalid = None
 
-    taglist = relationship("Tag", backref="tfile", secondary=File__Tag)
+    taglist  = relationship("Tag", backref="tfile", secondary=File__Tag)
+    attrlist = relationship("KV", backref="tfile", secondary=File__KV)
+
+    ## @property
+    ## def attrmap(self):
+    ##     return self._attrmap
+
+    ## @attrmap.setter
+    ## def attrmap(self, value):
 
     def get_realpath(self):
         if self.RELATIVE_BASE_DIR:
@@ -248,6 +289,19 @@ def resync_db(START_DIR):
 
             
     dindex = dict([(f.path, f.size) for f in db_session.query(File).all()])
+
+
+### ###
+### for entry in iterator
+### 
+### ### ensure id is in our store
+### oid = get_id(entry)
+### 
+### if oid not in store
+### ## do something
+### 
+### else
+### ## check consistency
 
 
 if __name__ == "__main__":

@@ -11,9 +11,6 @@ import Indexing as IX
 from Indexing import utf8str
 from sets import Set
 
-IX.DB_PATH = "_index.db"
-IX.init_db()
-
 PLATFORM_NAME = platform.system()
 if PLATFORM_NAME == "Windows":
     OPEN_CMD = "start"
@@ -245,6 +242,16 @@ if __name__ == "__main__":
     import sys
 
     BASE_DIR = sys.argv[-1]
+
+    # FORCE CONFIG
+    IX.DB_PATH = "_index.db"
+    IX.conf = dict(
+            FS_BACKEND = "OSFS",
+            DB_DSN = "sqlite:///%s" % IX.DB_PATH,
+            )
+
+    IX.DB_PATH = "_index.db"
+    IX.init_db()
 
     IX.reindex_dir(BASE_DIR)
 

@@ -28,8 +28,7 @@ File__Tag = sqla.Table("tfile__ttag", Base.metadata,
 def init_db():
     global db_session
 
-    dsn_db = "sqlite:///%s" % DB_PATH
-    db_engine = sqla.create_engine(dsn_db, echo=False)
+    db_engine = sqla.create_engine(conf['DB_DSN'], echo=False)
 
     Base.metadata.create_all(db_engine)
     db_sessionmaker = sessionmaker(bind = db_engine)

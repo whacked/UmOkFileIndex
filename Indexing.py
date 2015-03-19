@@ -13,6 +13,7 @@ import sqlalchemy as sqla
 from glob import glob
 from os.path import join as pjoin, split as psplit, splitext as psplitext, exists as pexists
 import os, re
+from collections import defaultdict
 
 import hashlib
 
@@ -239,6 +240,8 @@ class Indexer:
         """
 
         self.reindex()
+
+        rtn = defaultdict(list)
         for f_indb in db_session.query(File).all():
             f_infs = File(f_indb.path)  
             if f_infs.is_invalid:
@@ -247,13 +250,21 @@ class Indexer:
                 if f_merge:
                     f_merge.taglist.extend(f_indb.taglist)
                     db_session.add(f_merge)
+                    rtn['mov'].append((f_indb.get_realpath(), f_merge.get_realpath()))
                 else:
                     db_session.delete(f_indb)
-            else:
-                if f_infs.is_match(f_indb):
-                    continue
-                else:
-                    db_session.add(f_infs)
+                    rtn['del'].append((f_indb.get_realpath(), None))
+            ## NOTE:
+            ## since we call self.reindex() above, and reindex walks the tree,
+            ## this branch is expected to never run, but we kind of like to see
+            ## rtn have DEL, MOV, and also ADD
+            # else:
+            #     if f_infs.is_match(f_indb):
+            #         continue
+            #     else:
+            #         db_session.add(f_infs)
+            #         rtn['add'].append((None, f_indb.get_realpath()))
+        return rtn
 
 
 if __name__ == "__main__":

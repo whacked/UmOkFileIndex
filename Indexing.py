@@ -43,8 +43,6 @@ class Tag(Base):
     id   = sqla.Column(sqla.Integer, primary_key=True)
     text = sqla.Column(sqla.String, unique=True)
 
-    filelist = relationship("File", backref="ttag", secondary=File__Tag)
-
     _cache = {}
 
     @staticmethod
@@ -87,7 +85,7 @@ class File(Base):
 
     is_invalid = None
 
-    taglist = relationship("Tag", backref="tfile", secondary=File__Tag)
+    taglist = relationship('Tag', backref='filelist', secondary=File__Tag, lazy='dynamic')
 
     def get_realpath(self):
         if self.RELATIVE_BASE_DIR:

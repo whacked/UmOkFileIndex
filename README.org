@@ -50,10 +50,6 @@
 
 * TOFIX
 
-  reindex probably doesn't reindex as much as it claims it would
-
-  actually... resync_db doesn't do anything now
-
 ** DONE realtime search slow for non-toy-sized indexes
    CLOSED: [2013-11-03 Sun 14:09]
 
@@ -67,6 +63,5 @@
 
 ** TODO reorganize this
 
-* LICENSE? [[http://www.wtfpl.net][WTFPL]]
+* [[http://www.wtfpl.net][WTFPL license]]
 
-  it's so cooooool.

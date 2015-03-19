@@ -11,9 +11,6 @@ import Indexing as IX
 from Indexing import utf8str
 from sets import Set
 
-IX.DB_PATH = "_index.db"
-IX.init_db()
-
 PLATFORM_NAME = platform.system()
 if PLATFORM_NAME == "Windows":
     OPEN_CMD = "start"
@@ -246,7 +243,9 @@ if __name__ == "__main__":
 
     BASE_DIR = sys.argv[-1]
 
-    IX.reindex_dir(BASE_DIR)
+    IX.init_db("_index.db")
+    indexer = IX.Indexer(BASE_DIR)
+    indexer.reindex()
 
     app = QtGui.QApplication(sys.argv)
     app.setApplicationName('Um okay...')

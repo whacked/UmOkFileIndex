@@ -22,16 +22,16 @@ File__Tag = sqla.Table("tfile__ttag", Base.metadata,
         sqla.Column('ttag_id', sqla.Integer, sqla.ForeignKey('ttag.id')),
         sqla.Column('rank', sqla.Float),
         )
+db_sessionmaker = sessionmaker()
 
-def init_db():
+def init_db(DB_PATH):
     global db_session
 
     dsn_db = "sqlite:///%s" % DB_PATH
     db_engine = sqla.create_engine(dsn_db, echo=False)
 
     Base.metadata.create_all(db_engine)
-    db_sessionmaker = sessionmaker(bind = db_engine)
-    db_session = db_sessionmaker()
+    db_session = db_sessionmaker(bind = db_engine)
 
 def utf8str(s):
     return unicode(s).encode("utf-8")
@@ -177,74 +177,79 @@ class File(Base):
             raise Exception("unsupported operation: [%s]" % OP)
         return qr.all()
 
-def reindex_dir(START_DIR):
-    """
-    walk START_DIR and build the index into the database
+class Indexer:
 
-    The "intelligent" reindexing right now just means that if the size,
-    mtime, and filenames match, we assume they are not changed
-    
-    """
+    def __init__(self, BASE_DIR):
+        self._BASE_DIR = BASE_DIR
 
-    ## preload the entire index
-    dfile = dict([(f.path, f) for f in db_session.query(File).all()])
-    ## preload tags
-    dtag = dict([(t.text, f) for t in db_session.query(Tag).all()])
-    def cachedTag(text):
-        if text not in dtag:
-            dtag[text] = Tag(text)
-        return dtag[text]
+    def reindex(self):
+        """
+        walk self._BASE_DIR and build the index into the database
 
-    File.RELATIVE_BASE_DIR = START_DIR
-    for basedir, lsubdir, lsubfile in os.walk(START_DIR):
-        for subfile in lsubfile:
-            f = File(pjoin(basedir, subfile), derive_checksum = False)
-            if f.size == 0:
-                continue
-            if f.path in dfile and f.is_match(dfile[f.path]):
-                continue
-            f.get_checksum()
+        The "intelligent" reindexing right now just means that if the size,
+        mtime, and filenames match, we assume they are not changed
+        
+        """
 
-            ## add pathname tokens as tags
-            basefilepath, ext = psplitext(f.path)
-            f.taglist += [cachedTag(token.lower()) for token in re.split(r'\W+', basefilepath) + [ext[1:]] if len(token) > 1]
-            print "ADDING", f, "..."
-            db_session.add(f)
-    db_session.commit()
+        ## preload the entire index
+        dfile = dict([(f.path, f) for f in db_session.query(File).all()])
+        ## preload tags
+        dtag = dict([(t.text, f) for t in db_session.query(Tag).all()])
+        def cachedTag(text):
+            if text not in dtag:
+                dtag[text] = Tag(text)
+            return dtag[text]
 
-def resync_db(START_DIR):
-    """
-    verify all entries in the database have not changed on the filesystem.
+        File.RELATIVE_BASE_DIR = self._BASE_DIR
+        for basedir, lsubdir, lsubfile in os.walk(self._BASE_DIR):
+            for subfile in lsubfile:
+                f = File(pjoin(basedir, subfile), derive_checksum = False)
+                if f.size == 0:
+                    continue
+                if f.path in dfile and f.is_match(dfile[f.path]):
+                    continue
+                f.get_checksum()
 
-    If attribute changes are detected, overwrite the value in the db
+                ## add pathname tokens as tags
+                basefilepath, ext = psplitext(f.path)
+                f.taglist += [cachedTag(token.lower()) for token in re.split(r'\W+', basefilepath) + [ext[1:]] if len(token) > 1]
+                print "ADDING", f, "..."
+                db_session.add(f)
+        db_session.commit()
 
-    If the file is no longer found, in order to preserve work, look for the
-    first matched file with a matching hash, rebind all tags to that file,
-    and delete the entry
+    def resync_db(self):
+        """
+        verify all entries in the database have not changed on the filesystem.
 
-    If no matches are found, assume the file is gone and just delete the
-    entry
-    
-    """
+        If attribute changes are detected, overwrite the value in the db
 
-    for f_indb in db_session.query(File).all():
-        f_infs = File(f_indb.path)  
-        if f_infs.is_invalid:
-            ## look for matching hash
-            f_merge = db_session.query(File).filter_by(sha1 = f_infs.sha1).first()
-            if f_merge:
-                f_merge.taglist.extend(f_indb.taglist)
-                db_session.add(f_merge)
+        If the file is no longer found, in order to preserve work, look for the
+        first matched file with a matching hash, rebind all tags to that file,
+        and delete the entry
+
+        If no matches are found, assume the file is gone and just delete the
+        entry
+        
+        """
+
+        for f_indb in db_session.query(File).all():
+            f_infs = File(f_indb.path)  
+            if f_infs.is_invalid:
+                ## look for matching hash
+                f_merge = db_session.query(File).filter_by(sha1 = f_infs.sha1).first()
+                if f_merge:
+                    f_merge.taglist.extend(f_indb.taglist)
+                    db_session.add(f_merge)
+                else:
+                    db_session.delete(f_indb)
             else:
-                db_session.delete(f_indb)
-        else:
-            if f_infs.is_match(f_indb):
-                continue
-            else:
-                db_session.add(f_infs)
+                if f_infs.is_match(f_indb):
+                    continue
+                else:
+                    db_session.add(f_infs)
 
-            
-    dindex = dict([(f.path, f.size) for f in db_session.query(File).all()])
+                
+        dindex = dict([(f.path, f.size) for f in db_session.query(File).all()])
 
 
 if __name__ == "__main__":
@@ -281,12 +286,6 @@ if __name__ == "__main__":
     INDEXFILEPATH = "_index.db"
     File.RELATIVE_BASE_DIR = args.basedir
 
-    if args.use_fakedb:
-        ## database definition
-        DB_PATH = ":memory:"
-    else:
-        DB_PATH = INDEXFILEPATH
-
     if args.reindex_complete:
         raise Exception("not completely implemented!")
     elif args.reindex_from_scratch:
@@ -296,12 +295,19 @@ if __name__ == "__main__":
         print "reindexing"
         
     ## database check + initialization
-    init_db()
+    if args.use_fakedb:
+        ## database definition
+        DB_PATH = ":memory:"
+    else:
+        DB_PATH = INDEXFILEPATH
+    init_db(DB_PATH)
+
+    indexer = Indexer(args.basedir)
 
     if args.use_fakedb or not pexists(INDEXFILEPATH):
         ## TODO
         ## this is redundant
-        reindex_dir(args.basedir)
+        indexer.reindex()
 
     if args.add:
         f = File(args.add[0], derive_checksum = True, taglist = args.add[1:])

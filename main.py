@@ -17,10 +17,10 @@ if PLATFORM_NAME == "Windows":
 elif PLATFORM_NAME == "Darwin":
     OPEN_CMD = "open"
 elif PLATFORM_NAME == "Linux":
-    print "assuming xdg-open supported!"
+    print("assuming xdg-open supported!")
     OPEN_CMD = "xdg-open"
 else:
-    print "cannot detect platform. open operation will not be supported"
+    print("cannot detect platform. open operation will not be supported")
     OPEN_CMD = None
 
 class InstantSearchLineEdit(QtGui.QLineEdit):

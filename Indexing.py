@@ -155,7 +155,7 @@ class File(Base):
         return all([getattr(self, attr) == getattr(fcheck, attr) for attr in ("size", "mtime", "path")])
 
     def open(self):
-        print "open", self.get_realpath()
+        print('open %s' % self.get_realpath())
 
     @staticmethod
     def get(**kw):
@@ -182,7 +182,7 @@ class Indexer:
     def __init__(self, BASE_DIR):
         self._BASE_DIR = BASE_DIR
 
-    def reindex(self):
+    def reindex(self, verbose=True):
         """
         walk self._BASE_DIR and build the index into the database
 
@@ -213,7 +213,8 @@ class Indexer:
                 ## add pathname tokens as tags
                 basefilepath, ext = psplitext(f.path)
                 f.taglist += [cachedTag(token.lower()) for token in re.split(r'\W+', basefilepath) + [ext[1:]] if len(token) > 1]
-                print "ADDING", f, "..."
+                if verbose:
+                    print('ADDING %s ...' % (f))
                 db_session.add(f)
         db_session.commit()
 
@@ -292,7 +293,7 @@ if __name__ == "__main__":
         pexists(INDEXFILEPATH) and os.unlink(INDEXFILEPATH)
         raise Exception("not completely implemented!")
     elif args.reindex:
-        print "reindexing"
+        print('reindexing')
         
     ## database check + initialization
     if args.use_fakedb:
@@ -318,11 +319,11 @@ if __name__ == "__main__":
         return " ".join(s).split(",")
     if args.tagmatchall:
         for f in File.findall(OP_AND, proc_tag_arglist(args.tagmatchall)):
-            print f
+            print(f)
 
     if args.tagmatchany:
         for f in File.findall(OP_OR, proc_tag_arglist(args.tagmatchany)):
-            print f
+            print(f)
 
     if args.dump:
 

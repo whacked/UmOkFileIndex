@@ -196,6 +196,7 @@ class Indexer:
         The "intelligent" reindexing right now just means that if the size,
         mtime, and filenames match, we assume they are not changed
         
+        returns number of files processed from reindexing
         """
 
         ## preload the entire index
@@ -207,12 +208,17 @@ class Indexer:
                 dtag[text] = Tag(text)
             return dtag[text]
 
+        total_processed = 0
         File.RELATIVE_BASE_DIR = self._BASE_DIR
         for basedir, lsubdir, lsubfile in os.walk(self._BASE_DIR):
             for subfile in lsubfile:
-                f = File(pjoin(basedir, subfile), derive_checksum = False)
-                if f.size == 0:
-                    continue
+                filepath = pjoin(basedir, subfile)
+                f_existing = File.get(path = filepath)
+                if f_existing is not None:
+                    f = f_existing
+                else:
+                    f = File(filepath, derive_checksum = False)
+                # skip already processed files
                 if f.path in dfile and f.is_match(dfile[f.path]):
                     continue
                 f.get_checksum()
@@ -223,7 +229,10 @@ class Indexer:
                 if verbose:
                     print('ADDING %s ...' % (f))
                 db_session.add(f)
+                total_processed += 1
         db_session.commit()
+
+        return total_processed
 
     def resync_db(self):
         """

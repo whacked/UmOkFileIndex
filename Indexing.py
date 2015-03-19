@@ -93,6 +93,13 @@ class File(Base):
         else:
             return self.path
 
+    _is_invalid = None
+    @property
+    def is_invalid(self):
+        if self._is_invalid is None:
+            self._is_invalid = not pexists(self.get_realpath())
+        return self._is_invalid
+
     def get_checksum(self):
         if self.is_invalid:
             return (None, None)

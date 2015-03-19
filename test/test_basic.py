@@ -1,3 +1,4 @@
+# rerun --verbose --ignore=./test/.test_basic.py.swp "nosetests --nocapture"
 import sys
 sys.path.append('..')
 
@@ -61,7 +62,14 @@ class TestIndexer(TestCase):
 
     def test_resync_db(self):
         self.ix.reindex()
-        self.ix.resync_db()
+        # delete a random file
+        idx_delete = random.randint(0, len(self.fs.file_list)-1)
+        to_delete = self.fs.file_list.pop(idx_delete)
+        os.unlink(to_delete)
+        status = self.ix.resync_db()
+        assert_equal(len(status['del']), 1)
+        deleted, _ = status['del'][0]
+        assert_equal(deleted, to_delete)
 
     def tearDown(self):
         self.fs.destroy()

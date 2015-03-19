@@ -13,6 +13,7 @@ import sqlalchemy as sqla
 from glob import glob
 from os.path import join as pjoin, split as psplit, splitext as psplitext, exists as pexists
 import os, re
+import time
 from collections import defaultdict
 
 import hashlib
@@ -83,8 +84,8 @@ class File(Base):
     sha1  = sqla.Column(sqla.String(40))
     size  = sqla.Column(sqla.Integer)
     mtime = sqla.Column(sqla.Float)
-
-    is_invalid = None
+    ## time verified
+    vtime = sqla.Column(sqla.Float)
 
     taglist = relationship('Tag', backref='filelist', secondary=File__Tag, lazy='dynamic')
 
@@ -115,7 +116,6 @@ class File(Base):
         else:
             self.path = path
 
-        self.is_invalid = not pexists(self.get_realpath())
         if self.is_invalid:
             self.size = -1
             self.mtime = -1
@@ -123,6 +123,7 @@ class File(Base):
             stat = os.stat(self.get_realpath())
             self.size = stat.st_size
             self.mtime = stat.st_mtime
+        self.vtime = time.time()
 
         if derive_checksum:
             self.get_checksum()

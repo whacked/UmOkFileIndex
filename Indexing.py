@@ -185,7 +185,7 @@ class File(Base):
 class Indexer:
 
     def __init__(self, BASE_DIR):
-        self._BASE_DIR = BASE_DIR
+        self._BASE_DIR = os.path.expanduser(BASE_DIR)
 
     def reindex(self, verbose=True):
         """

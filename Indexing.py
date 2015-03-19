@@ -217,7 +217,7 @@ class Indexer:
 
                 ## add pathname tokens as tags
                 basefilepath, ext = psplitext(f.path)
-                f.taglist += [cachedTag(token.lower()) for token in re.split(r'\W+', basefilepath) + [ext[1:]] if len(token) > 1]
+                f.taglist.extend([cachedTag(token.lower()) for token in re.split(r'\W+', basefilepath) + [ext[1:]] if len(token) > 1])
                 if verbose:
                     print('ADDING %s ...' % (f))
                 db_session.add(f)

@@ -238,6 +238,7 @@ class Indexer:
         
         """
 
+        self.reindex()
         for f_indb in db_session.query(File).all():
             f_infs = File(f_indb.path)  
             if f_infs.is_invalid:
@@ -253,9 +254,6 @@ class Indexer:
                     continue
                 else:
                     db_session.add(f_infs)
-
-                
-        dindex = dict([(f.path, f.size) for f in db_session.query(File).all()])
 
 
 if __name__ == "__main__":

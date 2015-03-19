@@ -262,7 +262,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='blah blah')
 
-    parser.add_argument('--basedir', nargs='?', const=".",
+    parser.add_argument('--basedir', nargs='?', default=".",
                        help='base directory to index and treat as root path')
 
     parser.add_argument('--reindex', action='store_true',

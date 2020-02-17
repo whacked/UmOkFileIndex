@@ -309,14 +309,6 @@ if __name__ == "__main__":
     INDEXFILEPATH = "_index.db"
     File.RELATIVE_BASE_DIR = args.basedir
 
-    if args.reindex_complete:
-        raise Exception("not completely implemented!")
-    elif args.reindex_from_scratch:
-        pexists(INDEXFILEPATH) and os.unlink(INDEXFILEPATH)
-        raise Exception("not completely implemented!")
-    elif args.reindex:
-        print('reindexing')
-        
     ## database check + initialization
     if args.use_fakedb:
         ## database definition
@@ -327,6 +319,15 @@ if __name__ == "__main__":
 
     indexer = Indexer(args.basedir)
 
+    if not args.use_fakedb:
+        if args.reindex_complete:
+            raise Exception("not completely implemented!")
+        elif args.reindex_from_scratch:
+            pexists(INDEXFILEPATH) and os.unlink(INDEXFILEPATH)
+            raise Exception("not completely implemented!")
+        elif args.reindex:
+            print('reindexing')
+        
     if args.use_fakedb or not pexists(INDEXFILEPATH):
         ## TODO
         ## this is redundant

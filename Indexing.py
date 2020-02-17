@@ -61,9 +61,12 @@ class HashAlgorithm(Base, DefaultMixin):
     name = sqla.Column(sqla.String, unique=True)
 
 
-class Sha256Entry(Base, DefaultMixin):
-    NAME = 'sha256'
+class HashEntry(object):
     value = sqla.Column(sqla.String(64), unique=True)
+
+
+class Sha256Entry(Base, HashEntry, DefaultMixin):
+    NAME = 'sha256'
 
     @classmethod
     def get_hash(cls, content):
@@ -78,7 +81,7 @@ class BlobEntryHash(Base, DefaultMixin):
     time_created = sqla.Column(sqla.DateTime(), default=datetime.utcnow())
     hash_entry_id = sqla.Column(sqla.Integer)
 
-    def get_hash(self):
+    def get_hash(self) -> HashEntry:
         if self.hash_algorithm.name == Sha256Entry.NAME:
             return Sha256Entry.get(id=self.hash_entry_id)
         else:
@@ -91,7 +94,6 @@ class BlobEntryHash(Base, DefaultMixin):
 
 class LocalFilePathHistoryEntry(Base, DefaultMixin):
     RELATIVE_BASE_DIR = None
-    # __tablename__ = 'local_file_path_history_entry'
 
     blob_id = sqla.Column(sqla.Integer, sqla.ForeignKey('blob_entry.id'), nullable=False)
     blob = relationship('BlobEntry')
@@ -399,7 +401,7 @@ class Indexer:
                     )
                     blob_merge = BlobEntry.get(hash_entry_id=hash_existing.id)
                     if blob_merge:
-                        blob_merge.tags.extend(blob_indb.taglist)
+                        blob_merge.tags.extend(blob_indb.tags)
                         db_session.add(blob_merge)
                         rtn['mov'].append((blob_indb.get_realpath(), blob_merge.get_realpath()))
                     else:
@@ -506,9 +508,14 @@ if __name__ == "__main__":
             ofile.write("\t".join(map(str, ls)) + "\n")
 
 
-        printrow("sha1", "size", "time_verified", "path", "taglist")
-        for b in db_session.query(BlobEntry).all():
-            printrow(b.sha1, b.size, b.time_verified, b.path, '"%s"' % (",".join(sorted(map(str, b.taglist)))))
+        printrow("hash", "size", "time_verified", "path", "tags")
+        for blob in db_session.query(BlobEntry).all():  # type: BlobEntry
+            hash_entry = blob.hashes[0]  # type: BlobEntryHash
+            file = blob.get_local_files()[0]  # type: LocalFilePathHistoryEntry
+            printrow(hash_entry.get_hash().value,
+                     blob.size,
+                     file.time_verified,
+                     file.path, '"%s"' % (",".join(sorted(map(str, blob.tags)))))
 
         if args.dump != '-':
             ofile.close()

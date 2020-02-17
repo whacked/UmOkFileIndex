@@ -8,7 +8,6 @@ from PyQt4.Qt import QVariant, QAbstractTableModel
 from PyQt4 import QtCore, QtGui
 
 import Indexing as IX
-from Indexing import utf8str
 
 PLATFORM_NAME = platform.system()
 if PLATFORM_NAME == "Windows":
@@ -35,10 +34,10 @@ class InstantSearchLineEdit(QtGui.QLineEdit):
         ## to address strange behavior (bug?)
         ## http://stackoverflow.com/questions/3498829/how-to-get-this-qtablewidget-to-display-items
         self.table.setSortingEnabled(False)
-        ltoken = filter(lambda token: len(token)>1, unicode(self.displayText()).split())
+        ltoken = filter(lambda token: len(token)>1, str(self.displayText()).split())
         if not ltoken: return
 
-        lres = IX.File.findall(IX.File.OP_AND, ltoken)
+        lres = IX.BlobEntry.findall(IX.BlobEntry.OP_AND, ltoken)
         self.model.ls_data = lres
 
         self.table.setSortingEnabled(True)
@@ -70,7 +69,7 @@ class MyTableModel(QAbstractTableModel):
         icol = index.column()
         fobj = self.ls_data[index.row()]
         if icol == 0:
-            return " ".join([utf8str(t.text) for t in fobj.taglist[:3]])
+            return " ".join([str(t.text) for t in fobj.taglist[:3]])
         elif icol == 1:
             return fobj.path
 
@@ -158,7 +157,7 @@ class MainApp(QtGui.QWidget):
     def getFileAtRow(self, rowidx):
         # retrieve id from hidden data column (col id 2)
         tfile_id = int(self.model.ls_data[rowidx].id)
-        return IX.File.get(id = tfile_id)
+        return IX.BlobEntry.get(id = tfile_id)
 
     def openDirCommand(self):
         self._system_open(os.path.split(self.focusedFile.get_realpath())[0])
@@ -171,7 +170,7 @@ class MainApp(QtGui.QWidget):
         return dfile
 
     def getSharedTagList(self, lfile):
-        return reduce(lambda s, t: set(s).intersection(t), [[utf8str(t.text) for t in f.taglist] for f in lfile])
+        return reduce(lambda s, t: set(s).intersection(t), [[str(t.text) for t in f.taglist] for f in lfile])
 
     def updateTagDisplayCommand(self):
         dfile = self.getSelectedFileList()
@@ -180,7 +179,7 @@ class MainApp(QtGui.QWidget):
         elif len(dfile) is 1:
             f = dfile.values()[0]
             self.focusAndShowFileInfo(f)
-            self.tagEditText.setPlainText(", ".join([utf8str(t.text) for t in f.taglist]))
+            self.tagEditText.setPlainText(", ".join([str(t.text) for t in f.taglist]))
             self.tagEditLabel.setText("tags in %s" % (f.path))
         else:
             ## show intersection of tags
@@ -192,7 +191,7 @@ class MainApp(QtGui.QWidget):
         if not dfile:
             return
         ltag_old = set(self.getSharedTagList(dfile.values()))
-        ltag_new = set([text.strip() for text in unicode(self.tagEditText.toPlainText()).decode("utf-8").lower().strip(",").split(",")])
+        ltag_new = set([text.strip() for text in str(self.tagEditText.toPlainText()).decode("utf-8").lower().strip(",").split(",")])
 
         ## ADD
         ltagadd = map(IX.Tag.guaranteed_get, ltag_new.difference(ltag_old))

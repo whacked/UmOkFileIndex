@@ -103,7 +103,7 @@ class File(Base):
     def get_checksum(self):
         if self.is_invalid:
             return (None, None)
-        content = open(self.get_realpath()).read()
+        content = open(self.get_realpath(), 'rb').read()
         if not self.sha1:
             self.sha1 = hashlib.sha1(content).hexdigest()
         return (self.sha1)

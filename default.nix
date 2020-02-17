@@ -9,6 +9,10 @@ stdenv.mkDerivation rec {
 
     buildInputs = [
         python37Full
+        python37Packages.flask
+        python37Packages.flask-admin
+        python37Packages.fs
+        python37Packages.fs-s3fs
         python37Packages.ipython
         python37Packages.pyqt4
         python37Packages.sqlalchemy

@@ -9,8 +9,10 @@ stdenv.mkDerivation rec {
 
     buildInputs = [
         python37Full
-        python37Packages.sqlalchemy
+        python37Packages.ipython
         python37Packages.pyqt4
+        python37Packages.sqlalchemy
+        python37Packages.stringcase
     ];
 
     shellHook = ''

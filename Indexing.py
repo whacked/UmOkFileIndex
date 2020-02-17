@@ -35,8 +35,6 @@ def init_db(DB_PATH):
     Base.metadata.create_all(db_engine)
     db_session = db_sessionmaker(bind = db_engine)
 
-def utf8str(s):
-    return unicode(s).encode("utf-8")
 
 class Tag(Base):
 
@@ -356,11 +354,11 @@ if __name__ == "__main__":
         else:
             ofile = open(args.dump, 'w')
         def printrow(*ls):
-            ofile.write("\t".join(map(utf8str, ls)) + "\n")
+            ofile.write("\t".join(map(str, ls)) + "\n")
 
         printrow("sha1","size","mtime","path","taglist")
         for f in db_session.query(File).all():
-            printrow(f.sha1, f.size, f.mtime, f.path, '"%s"' % (",".join(sorted(map(utf8str, f.taglist)))))
+            printrow(f.sha1, f.size, f.mtime, f.path, '"%s"' % (",".join(sorted(map(str, f.taglist)))))
 
         if args.dump != '-':
             ofile.close()

@@ -9,7 +9,6 @@ from PyQt4 import QtCore, QtGui
 
 import Indexing as IX
 from Indexing import utf8str
-from sets import Set
 
 PLATFORM_NAME = platform.system()
 if PLATFORM_NAME == "Windows":
@@ -172,7 +171,7 @@ class MainApp(QtGui.QWidget):
         return dfile
 
     def getSharedTagList(self, lfile):
-        return reduce(lambda s, t: Set(s).intersection(t), [[utf8str(t.text) for t in f.taglist] for f in lfile])
+        return reduce(lambda s, t: set(s).intersection(t), [[utf8str(t.text) for t in f.taglist] for f in lfile])
 
     def updateTagDisplayCommand(self):
         dfile = self.getSelectedFileList()
@@ -192,8 +191,8 @@ class MainApp(QtGui.QWidget):
         dfile = self.getSelectedFileList()
         if not dfile:
             return
-        ltag_old = Set(self.getSharedTagList(dfile.values()))
-        ltag_new = Set([text.strip() for text in unicode(self.tagEditText.toPlainText()).decode("utf-8").lower().strip(",").split(",")])
+        ltag_old = set(self.getSharedTagList(dfile.values()))
+        ltag_new = set([text.strip() for text in unicode(self.tagEditText.toPlainText()).decode("utf-8").lower().strip(",").split(",")])
 
         ## ADD
         ltagadd = map(IX.Tag.guaranteed_get, ltag_new.difference(ltag_old))
